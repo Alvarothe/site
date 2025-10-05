@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mana Bot - Seu Companheiro de Treinamento em Rucoy Online</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+        
+        :root {
+            --primary-color: #ff9d00;
+            --secondary-color: #ff6200;
+            --dark-bg: #0a0a0a;
+            --card-bg: rgba(20, 20, 30, 0.7);
+            --text-light: #f0f0f0;
+            --text-dim: #a0a0a0;
+            --border-glow: 0 0 10px rgba(255, 157, 0, 0.7);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'VT323', monospace;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230a0a0a"/><rect x="0" y="0" width="50" height="50" fill="%23111111"/><rect x="50" y="50" width="50" height="50" fill="%23111111"/></svg>');
+            background-size: 100px 100px;
+            opacity: 0.2;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header & Language Switcher */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 15px 0;
+            background-color: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 2px solid rgba(255, 157, 0, 0.3);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(255, 157, 0, 0.7);
+        }
+        
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            background-color: rgba(30, 30, 40, 0.7);
+            border: 2px solid rgba(255, 157, 0, 0.5);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .lang-btn {
+            padding: 8px 15px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .lang-btn.active {
+            background-color: var(--primary-color);
+            color: var(--dark-bg);
+        }
+        
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600"><rect fill="%230a0a0a" width="1200" height="600"/><path d="M0,450 L150,350 L300,400 L450,300 L600,350 L750,250 L900,300 L1050,200 L1200,250 L1200,600 L0,600 Z" fill="%231a1a2e" opacity="0.8"/><path d="M0,500 L200,450 L400,500 L600,450 L800,500 L1000,450 L1200,500 L1200,600 L0,600 Z" fill="%23162139" opacity="0.9"/><rect x="200" y="100" width="80" height="120" fill="%233d5a80"/><rect x="210" y="90" width="60" height="20" fill="%23ee6c4d"/><rect x="900" y="150" width="100" height="150" fill="%233d5a80"/><rect x="910" y="140" width="80" height="20" fill="%23ee6c4d"/><rect x="500" y="80" width="120" height="180" fill="%233d5a80"/><rect x="510" y="70" width="100" height="20" fill="%23ee6c4d"/><circle cx="100" cy="100" r="40" fill="%23ff9d00" opacity="0.8"/><circle cx="1100" cy="120" r="50" fill="%23ff9d00" opacity="0.6"/></svg>');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+        
+        .hero-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 36px;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(255, 157, 0, 0.5);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .hero-subtitle {
+            font-size: 24px;
+            margin-bottom: 40px;
+            color: var(--text-dim);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            background-color: var(--primary-color);
+            color: var(--dark-bg);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .btn:hover {
+            box-shadow: 0 0 15px rgba(255, 157, 0, 0.7);
+            transform: translateY(-3px);
+        }
+        
+        /* Glass Card */
+        .glass-card {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 157, 0, 0.3);
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(255, 157, 0, 0.2);
+            border-color: rgba(255, 157, 0, 0.6);
+        }
+        
+        /* Section Titles */
+        .section-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 28px;
+            text-align: center;
+            margin: 60px 0 40px;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(255, 157, 0, 0.5);
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .feature-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            background-color: rgba(255, 157, 0, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .feature-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .feature-description {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: var(--text-dim);
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            transition: width 2s ease;
+        }
+        
+        /* Random Percentage */
+        .random-percentage {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 32px;
+            color: var(--primary-color);
+            margin: 15px 0;
+        }
+        
+        /* Timer Controls */
+        .timer-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .timer-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .timer-label {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .timer-value {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+        
+        /* Benefits Section */
+        .benefits {
+            padding: 80px 0;
+            background-color: rgba(20, 20, 30, 0.3);
+        }
+        
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+        
+        .benefit-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: float 4s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.5s);
+        }
+        
+        .benefit-icon {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 20px;
+            background-color: rgba(255, 157, 0, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 35px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 15px rgba(255, 157, 0, 0.3);
+        }
+        
+        .benefit-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        /* Pricing Section */
+        .pricing {
+            padding: 80px 0;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .pricing-card {
+            position: relative;
+            border: 2px solid rgba(255, 157, 0, 0.3);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .pricing-card.popular {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(255, 157, 0, 0.4);
+            transform: scale(1.05);
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-color);
+            color: var(--dark-bg);
+            padding: 5px 15px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            border-radius: 20px;
+        }
+        
+        .pricing-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .pricing-price {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+        
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+        
+        .pricing-features li {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: var(--text-dim);
+        }
+        
+        .pricing-features li::before {
+            content: "✓ ";
+            color: var(--primary-color);
+            margin-right: 5px;
+        }
+        
+        /* Testimonials Section */
+        .testimonials {
+            padding: 80px 0;
+            background-color: rgba(20, 20, 30, 0.3);
+        }
+        
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .testimonial-card {
+            position: relative;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 25px;
+            border: 2px solid rgba(255, 157, 0, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s forwards;
+            animation-delay: calc(var(--i) * 0.2s);
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .testimonial-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .testimonial-text {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+        
+        .testimonial-author {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: var(--primary-color);
+        }
+        
+        /* FAQ Section */
+        .faq {
+            padding: 80px 0;
+        }
+        
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 157, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .faq-question {
+            padding: 20px;
+            background-color: rgba(20, 20, 30, 0.5);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+        
+        .faq-question::after {
+            content: "+";
+            font-size: 24px;
+            transition: transform 0.3s ease;
+        }
+        
+        .faq-question.active::after {
+            transform: rotate(45deg);
+        }
+        
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+            background-color: var(--card-bg);
+        }
+        
+        .faq-answer-content {
+            padding: 20px;
+            font-size: 20px;
+            color: var(--text-dim);
+        }
+        
+        /* Footer */
+        footer {
+            padding: 50px 0 30px;
+            background-color: rgba(10, 10, 10, 0.8);
+            border-top: 2px solid rgba(255, 157, 0, 0.3);
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .footer-section h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section ul li {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        
+        .footer-section a {
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section a:hover {
+            color: var(--primary-color);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 157, 0, 0.2);
+            font-size: 16px;
+            color: var(--text-dim);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 24px;
+            }
+            
+            .hero-subtitle {
+                font-size: 18px;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 12px;
+            }
+            
+            .section-title {
+                font-size: 20px;
+            }
+            
+            .feature-title, .pricing-title {
+                font-size: 16px;
+            }
+            
+            .pricing-price {
+                font-size: 24px;
+            }
+            
+            .faq-question {
+                font-size: 14px;
+            }
+            
+            .faq-answer-content {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">Mana Bot</div>
+                <div class="lang-switcher">
+                    <button class="lang-btn active" data-lang="pt">PT</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title" data-pt="Mana Bot — Seu Companheiro de Treinamento em Rucoy Online" data-en="Mana Bot — Your Training Companion in Rucoy Online">Mana Bot — Seu Companheiro de Treinamento em Rucoy Online</h1>
+                <p class="hero-subtitle" data-pt="Automatize seu treino de mana 24h por dia com inteligência e segurança." data-en="Automate your mana training 24 hours a day with intelligence and security.">Automatize seu treino de mana 24h por dia com inteligência e segurança.</p>
+                <div class="cta-buttons">
+                    <a href="#pricing" class="btn" data-pt="Comprar Agora" data-en="Buy Now">Comprar Agora</a>
+                    <a href="#" class="btn btn-secondary" data-pt="Ver Demonstração" data-en="Watch Demo">Ver Demonstração</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title" data-pt="Recursos" data-en="Features">Recursos</h2>
+            <div class="features-grid">
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title" data-pt="Monitoramento Inteligente" data-en="Smart Monitoring">Monitoramento Inteligente</h3>
+                    <p class="feature-description" data-pt="Acompanhe em tempo real o progresso do seu treinamento" data-en="Track your training progress in real time">Acompanhe em tempo real o progresso do seu treinamento</p>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">🎲</div>
+                    <h3 class="feature-title" data-pt="Sorteio Aleatório" data-en="Random Selection">Sorteio Aleatório</h3>
+                    <p class="feature-description" data-pt="Comportamento imprevisível para maior segurança" data-en="Unpredictable behavior for greater security">Comportamento imprevisível para maior segurança</p>
+                    <div class="random-percentage" id="randomPercentage">0%</div>
+                </div>
+                
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">⏱️</div>
+                    <h3 class="feature-title" data-pt="Controle de Tempo" data-en="Time Control">Controle de Tempo</h3>
+                    <p class="feature-description" data-pt="Defina intervalos personalizados para pausas" data-en="Set custom intervals for breaks">Defina intervalos personalizados para pausas</p>
+                    <div class="timer-controls">
+                        <div class="timer-control">
+                            <div class="timer-label" data-pt="Minutos" data-en="Minutes">Minutos</div>
+                            <div class="timer-value" id="minutesValue">15</div>
+                        </div>
+                        <div class="timer-control">
+                            <div class="timer-label" data-pt="Segundos" data-en="Seconds">Segundos</div>
+                            <div class="timer-value" id="secondsValue">30</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="benefits">
+        <div class="container">
+            <h2 class="section-title" data-pt="Benefícios" data-en="Benefits">Benefícios</h2>
+            <div class="benefits-grid">
+                <div class="glass-card benefit-card" style="--i: 0">
+                    <div class="benefit-icon">🛡️</div>
+                    <h3 class="benefit-title" data-pt="Treinamento 24/7" data-en="24/7 Training">Treinamento 24/7</h3>
+                    <p class="feature-description" data-pt="Automatizado e contínuo" data-en="Automated and continuous">Automatizado e contínuo</p>
+                </div>
+                
+                <div class="glass-card benefit-card" style="--i: 1">
+                    <div class="benefit-icon">🧪</div>
+                    <h3 class="benefit-title" data-pt="Segurança" data-en="Security">Segurança</h3>
+                    <p class="feature-description" data-pt="Comportamento aleatório" data-en="Random behavior">Comportamento aleatório</p>
+                </div>
+                
+                <div class="glass-card benefit-card" style="--i: 2">
+                    <div class="benefit-icon">💎</div>
+                    <h3 class="benefit-title" data-pt="Interface Intuitiva" data-en="Intuitive Interface">Interface Intuitiva</h3>
+                    <p class="feature-description" data-pt="Personalizável e fácil" data-en="Customizable and easy">Personalizável e fácil</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2 class="section-title" data-pt="Planos e Preços" data-en="Plans and Pricing">Planos e Preços</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3 class="pricing-title" data-pt="Básico" data-en="Basic">Básico</h3>
+                    <div class="pricing-price">R$19,90</div>
+                    <ul class="pricing-features">
+                        <li data-pt="Treinamento básico" data-en="Basic training">Treinamento básico</li>
+                        <li data-pt="1 conta" data-en="1 account">1 conta</li>
+                        <li data-pt="Suporte por email" data-en="Email support">Suporte por email</li>
+                    </ul>
+                    <a href="#" class="btn" data-pt="Comprar Agora" data-en="Buy Now">Comprar Agora</a>
+                </div>
+                
+                <div class="pricing-card popular">
+                    <div class="popular-badge" data-pt="Mais Popular" data-en="Most Popular">Mais Popular</div>
+                    <h3 class="pricing-title" data-pt="PRO" data-en="PRO">PRO</h3>
+                    <div class="pricing-price">R$39,90</div>
+                    <ul class="pricing-features">
+                        <li data-pt="Treinamento avançado" data-en="Advanced training">Treinamento avançado</li>
+                        <li data-pt="Até 3 contas" data-en="Up to 3 accounts">Até 3 contas</li>
+                        <li data-pt="Suporte prioritário" data-en="Priority support">Suporte prioritário</li>
+                        <li data-pt="Atualizações gratuitas" data-en="Free updates">Atualizações gratuitas</li>
+                    </ul>
+                    <a href="#" class="btn" data-pt="Comprar Agora" data-en="Buy Now">Comprar Agora</a>
+                </div>
+                
+                <div class="pricing-card">
+                    <h3 class="pricing-title" data-pt="Premium" data-en="Premium">Premium</h3>
+                    <div class="pricing-price">R$79,90</div>
+                    <ul class="pricing-features">
+                        <li data-pt="Treinamento elite" data-en="Elite training">Treinamento elite</li>
+                        <li data-pt="Contas ilimitadas" data-en="Unlimited accounts">Contas ilimitadas</li>
+                        <li data-pt="Suporte 24/7" data-en="24/7 support">Suporte 24/7</li>
+                        <li data-pt="Recursos exclusivos" data-en="Exclusive features">Recursos exclusivos</li>
+                    </ul>
+                    <a href="#" class="btn" data-pt="Comprar Agora" data-en="Buy Now">Comprar Agora</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials">
+        <div class="container">
+            <h2 class="section-title" data-pt="Depoimentos de Jogadores" data-en="Player Testimonials">Depoimentos de Jogadores</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card" style="--i: 0">
+                    <img src="https://picsum.photos/seed/player1/60/60.jpg" alt="Player" class="testimonial-avatar">
+                    <p class="testimonial-text" data-pt="O Mana Bot mudou meu jogo — nunca mais fiquei sem mana!" data-en="Mana Bot changed my game — I never run out of mana anymore!">O Mana Bot mudou meu jogo — nunca mais fiquei sem mana!</p>
+                    <p class="testimonial-author">— MageMaster99</p>
+                </div>
+                
+                <div class="testimonial-card" style="--i: 1">
+                    <img src="https://picsum.photos/seed/player2/60/60.jpg" alt="Player" class="testimonial-avatar">
+                    <p class="testimonial-text" data-pt="Interface simples e eficiente. Subi 20 levels em uma semana!" data-en="Simple and efficient interface. Leveled up 20 times in a week!">Interface simples e eficiente. Subi 20 levels em uma semana!</p>
+                    <p class="testimonial-author">— RucoyWarrior</p>
+                </div>
+                
+                <div class="testimonial-card" style="--i: 2">
+                    <img src="https://picsum.photos/seed/player3/60/60.jpg" alt="Player" class="testimonial-avatar">
+                    <p class="testimonial-text" data-pt="O recurso de comportamento aleatório é genial. Ninguém suspeita!" data-en="The random behavior feature is brilliant. No one suspects!">O recurso de comportamento aleatório é genial. Ninguém suspeita!</p>
+                    <p class="testimonial-author">— StealthCaster</p>
+                </div>
+                
+                <div class="testimonial-card" style="--i: 3">
+                    <img src="https://picsum.photos/seed/player4/60/60.jpg" alt="Player" class="testimonial-avatar">
+                    <p class="testimonial-text" data-pt="Melhor investimento que fiz no jogo. Vale cada centavo!" data-en="Best investment I made in the game. Worth every penny!">Melhor investimento que fiz no jogo. Vale cada centavo!</p>
+                    <p class="testimonial-author">— ProGamerBR</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq">
+        <div class="container">
+            <h2 class="section-title" data-pt="Perguntas Frequentes" data-en="Frequently Asked Questions">Perguntas Frequentes</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question" data-pt="O Mana Bot é seguro de usar?" data-en="Is Mana Bot safe to use?">O Mana Bot é seguro de usar?</div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-pt="Sim! O Mana Bot foi desenvolvido com algoritmos de comportamento aleatório que simulam ações humanas, tornando praticamente impossível para os sistemas de detecção identificá-lo como um bot." data-en="Yes! Mana Bot was developed with random behavior algorithms that simulate human actions, making it practically impossible for detection systems to identify it as a bot.">Sim! O Mana Bot foi desenvolvido com algoritmos de comportamento aleatório que simulam ações humanas, tornando praticamente impossível para os sistemas de detecção identificá-lo como um bot.</div>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" data-pt="Posso usar em várias contas?" data-en="Can I use it on multiple accounts?">Posso usar em várias contas?</div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-pt="Depende do plano que você adquirir. O plano Básico permite uso em 1 conta, o plano PRO em até 3 contas, e o plano Premium permite contas ilimitadas." data-en="It depends on the plan you purchase. The Basic plan allows use on 1 account, the PRO plan on up to 3 accounts, and the Premium plan allows unlimited accounts.">Depende do plano que você adquirir. O plano Básico permite uso em 1 conta, o plano PRO em até 3 contas, e o plano Premium permite contas ilimitadas.</div>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" data-pt="Quais são as formas de pagamento?" data-en="What are the payment methods?">Quais são as formas de pagamento?</div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-pt="Aceitamos cartões de crédito (Visa, Mastercard, American Express), PIX, boleto bancário e PayPal. Todas as transações são seguras e criptografadas." data-en="We accept credit cards (Visa, Mastercard, American Express), PIX, bank slip, and PayPal. All transactions are secure and encrypted.">Aceitamos cartões de crédito (Visa, Mastercard, American Express), PIX, boleto bancário e PayPal. Todas as transações são seguras e criptografadas.</div>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" data-pt="Como funciona a garantia?" data-en="How does the warranty work?">Como funciona a garantia?</div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content" data-pt="Oferecemos garantia de 7 dias. Se por qualquer motivo você não ficar satisfeito com o produto, entraremos em contato para resolver seu problema ou faremos o reembolso integral." data-en="We offer a 7-day warranty. If for any reason you are not satisfied with the product, we will contact you to resolve your issue or provide a full refund.">Oferecemos garantia de 7 dias. Se por qualquer motivo você não ficar satisfeito com o produto, entraremos em contato para resolver seu problema ou faremos o reembolso integral.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 data-pt="Contato" data-en="Contact">Contato</h3>
+                    <ul>
+                        <li>Email: contato@manabot.com</li>
+                        <li>Discord: discord.gg/manabot</li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 data-pt="Links Úteis" data-en="Useful Links">Links Úteis</h3>
+                    <ul>
+                        <li><a href="#" data-pt="Termos de Uso" data-en="Terms of Use">Termos de Uso</a></li>
+                        <li><a href="#" data-pt="Política de Privacidade" data-en="Privacy Policy">Política de Privacidade</a></li>
+                        <li><a href="#" data-pt="Suporte" data-en="Support">Suporte</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 data-pt="Sobre" data-en="About">Sobre</h3>
+                    <ul>
+                        <li data-pt="Mana Bot é uma ferramenta independente, não afiliada ao Rucoy Online." data-en="Mana Bot is an independent tool, not affiliated with Rucoy Online.">Mana Bot é uma ferramenta independente, não afiliada ao Rucoy Online.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p data-pt="© 2023 Mana Bot. Todos os direitos reservados." data-en="© 2023 Mana Bot. All rights reserved.">© 2023 Mana Bot. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Language Switcher
+        const langBtns = document.querySelectorAll('.lang-btn');
+        const elementsWithTranslation = document.querySelectorAll('[data-pt]');
+        
+        langBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.getAttribute('data-lang');
+                
+                // Update active button
+                langBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update language
+                elementsWithTranslation.forEach(element => {
+                    if (lang === 'en' && element.getAttribute('data-en')) {
+                        element.textContent = element.getAttribute('data-en');
+                    } else if (lang === 'pt' && element.getAttribute('data-pt')) {
+                        element.textContent = element.getAttribute('data-pt');
+                    }
+                });
+                
+                // Update HTML lang attribute
+                document.documentElement.lang = lang === 'en' ? 'en-US' : 'pt-BR';
+            });
+        });
+        
+        // Progress Bar Animation
+        window.addEventListener('load', () => {
+            const progressBar = document.getElementById('progressBar');
+            setTimeout(() => {
+                progressBar.style.width = '85%';
+            }, 500);
+        });
+        
+        // Random Percentage Generator
+        function updateRandomPercentage() {
+            const randomPercentage = document.getElementById('randomPercentage');
+            const value = Math.floor(Math.random() * 100);
+            randomPercentage.textContent = value + '%';
+        }
+        
+        updateRandomPercentage();
+        setInterval(updateRandomPercentage, 3000);
+        
+        // Timer Controls
+        const minutesValue = document.getElementById('minutesValue');
+        const secondsValue = document.getElementById('secondsValue');
+        
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                element.textContent = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+        
+        // Animate timer values on load
+        window.addEventListener('load', () => {
+            animateValue(minutesValue, 0, 15, 1000);
+            animateValue(secondsValue, 0, 30, 1000);
+        });
+        
+        // FAQ Accordion
+        const faqQuestions = document.querySelectorAll('.faq-question');
+        
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', () => {
+                // Toggle active class
+                question.classList.toggle('active');
+                
+                // Get the answer
+                const answer = question.nextElementSibling;
+                
+                // Toggle max height
+                if (answer.style.maxHeight) {
+                    answer.style.maxHeight = null;
+                } else {
+                    answer.style.maxHeight = answer.scrollHeight + 'px';
+                }
+            });
+        });
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    window.scrollTo({
+                        top: target.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Add glow effect to buttons on hover
+        const buttons = document.querySelectorAll('.btn');
+        
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                button.style.boxShadow = '0 0 15px rgba(255, 157, 0, 0.7)';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.boxShadow = '';
+            });
+        });
+        
+        // Animate elements on scroll
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+        
+        // Observe all glass cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
