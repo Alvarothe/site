@@ -1,997 +1,1009 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mana Bot — Seu Companheiro de Treinamento em Rucoy Online</title>
-<style>
-/* ----------------------
-   Reset & base
-   ---------------------- */
-:root{
-  --bg:#0b0f14;
-  --panel: rgba(255,255,255,0.04);
-  --glass-border: rgba(255,255,255,0.06);
-  --accent1: #00b4ff; /* blue glow */
-  --accent2: #ffd34d; /* yellow/orange */
-  --accent3: #ff8c1a; /* orange */
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Courier New", monospace;
-  --card-radius: 14px;
-  --pixel-gap: 6px;
-  --glass-blur: 8px;
-  --shadow: 0 6px 30px rgba(0,0,0,0.6);
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mana Bot - Seu Companheiro de Treinamento em Rucoy Online</title>
+    <style>
+        :root {
+            --bg: #071018;
+            --fg: #ffb84c;
+            --accent: #ff5e62;
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --text-light: #e2e8f0;
+            --text-dark: #1e293b;
+            --border-color: rgba(255, 184, 76, 0.3);
+        }
 
-/* basic */
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family:var(--mono);
-  background:
-    radial-gradient(1200px 600px at 10% 10%, rgba(0,180,255,0.06), transparent 6%),
-    radial-gradient(900px 500px at 90% 90%, rgba(255,140,26,0.04), transparent 6%),
-    linear-gradient(180deg,#06070a 0%, #0b0f14 100%);
-  color:#e6f3ff;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  overflow-x:hidden;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* subtle pixel tiled pattern (dungeon bricks) */
-.bg-pattern{
-  position:fixed; inset:0; pointer-events:none; z-index:0;
-  background-image:
-    linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255,255,255,0.01) 1px, transparent 1px);
-  background-size: 12px 12px, 12px 12px;
-  opacity:0.06;
-}
+        body {
+            font-family: "VT323", "Courier New", monospace;
+            background: var(--bg);
+            color: var(--text-light);
+            overflow-x: hidden;
+            position: relative;
+        }
 
-/* container */
-.container{
-  max-width:1200px;
-  margin:0 auto;
-  padding:28px;
-  position:relative;
-  z-index:2;
-}
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap');
 
-/* top bar */
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-bottom:12px;
-}
-.logo{
-  display:flex;align-items:center;gap:12px;
-  user-select:none;
-}
-.logo .mark{
-  width:54px;height:54px;border-radius:8px;
-  background: linear-gradient(135deg,var(--accent1), #5ad1ff 40%, #5ad1ff 60%);
-  box-shadow: 0 6px 18px rgba(0,180,255,0.12), inset 0 -6px 24px rgba(255,255,255,0.04);
-  display:flex;align-items:center;justify-content:center;
-  border:2px solid rgba(255,255,255,0.06);
-  transform: rotate(-6deg);
-}
+        /* ASCII Vortex Background */
+        #vortex-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
 
-/* pixel "M" */
-.mark svg{filter:drop-shadow(0 6px 14px rgba(0,180,255,0.08))}
+        /* Language Switcher */
+        .lang-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-.title-small{
-  font-size:12px;
-  color:rgba(255,255,255,0.6);
-  letter-spacing:2px;
-}
-.title-main{
-  font-size:16px;
-  font-weight:700;
-  letter-spacing:1px;
-  color:var(--accent1);
-  text-shadow:0 0 18px rgba(0,180,255,0.14);
-}
+        .lang-btn {
+            padding: 8px 16px;
+            background: transparent;
+            color: var(--text-light);
+            border: none;
+            cursor: pointer;
+            font-family: "VT323", monospace;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
 
-/* language toggle */
-.lang-toggle{
-  display:flex;align-items:center;gap:8px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border:1px solid rgba(255,255,255,0.04);
-  padding:6px;border-radius:10px;
-}
-.lang-toggle button{
-  background:transparent;border:0;color:inherit;padding:6px 8px;border-radius:6px;font-weight:700;cursor:pointer;
-  letter-spacing:1px;font-size:13px;
-}
-.lang-toggle button.active{
-  box-shadow: 0 6px 18px rgba(0,0,0,0.6), inset 0 -6px 16px rgba(255,255,255,0.02);
-  background: linear-gradient(90deg, rgba(0,180,255,0.12), rgba(255,140,26,0.06));
-}
+        .lang-btn.active {
+            background: var(--fg);
+            color: var(--text-dark);
+        }
 
-/* ----------------------
-   Hero Section
-   ---------------------- */
-.hero{
-  display:grid;
-  grid-template-columns: 1fr;
-  gap:18px;
-  align-items:center;
-  margin-bottom:28px;
-  position:relative;
-  overflow:visible;
-}
+        .lang-btn:hover:not(.active) {
+            background: rgba(255, 184, 76, 0.2);
+        }
 
-/* pixel-art hero backplate (svg) */
-.hero-scene{
-  width:100%;
-  height:320px;
-  border-radius:18px;
-  overflow:hidden;
-  position:relative;
-  background:
-    linear-gradient(180deg, rgba(10,12,16,0.6), rgba(2,4,6,0.6)),
-    repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0 2px, transparent 2px 6px);
-  border:1px solid rgba(255,255,255,0.04);
-  box-shadow: var(--shadow);
-  display:flex;align-items:center;justify-content:flex-start;
-  padding:20px;
-  backdrop-filter: blur(var(--glass-blur));
-}
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
 
-/* hero castle / forest pixel art (SVG inserted) */
-.hero-svg{
-  width:46%;
-  min-width:320px;
-  filter: drop-shadow(0 20px 40px rgba(0,180,255,0.06));
-  transform: translateZ(0);
-}
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            padding: 80px 20px;
+        }
 
-/* right content */
-.hero-cta{
-  margin-left:22px;
-  display:flex;flex-direction:column;gap:10px;
-  width:54%;
-}
+        .hero-title {
+            font-family: "Press Start 2P", monospace;
+            font-size: clamp(24px, 5vw, 48px);
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--fg), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(255, 184, 76, 0.5);
+            animation: float 3s ease-in-out infinite;
+        }
 
-/* floating title */
-.hero-title{
-  font-size:22px;
-  line-height:1.05;
-  font-weight:700;
-  letter-spacing:1px;
-  background: linear-gradient(90deg, var(--accent2), var(--accent3));
-  -webkit-background-clip:text; background-clip:text; color:transparent;
-  filter: drop-shadow(0 8px 36px rgba(255,140,26,0.12));
-  transform-origin:center;
-  animation: floatTitle 4s ease-in-out infinite;
-  text-shadow: 0 3px 24px rgba(255,140,26,0.06);
-}
-@keyframes floatTitle{
-  0%{transform: translateY(0) rotate(-1deg)}
-  50%{transform: translateY(-8px) rotate(1deg)}
-  100%{transform: translateY(0) rotate(-1deg)}
-}
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
 
-.hero-sub{
-  color:rgba(230,243,255,0.85);
-  font-size:13px;
-  max-width:640px;
-}
+        .hero-subtitle {
+            font-size: clamp(18px, 3vw, 28px);
+            margin-bottom: 40px;
+            max-width: 800px;
+        }
 
-/* CTAs */
-.cta-row{display:flex;gap:12px;margin-top:8px}
-.btn{
-  display:inline-flex;align-items:center;gap:10px;
-  padding:12px 16px;border-radius:12px;border:2px solid rgba(255,255,255,0.06);
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  cursor:pointer;font-weight:700;letter-spacing:0.6px;
-  transition: all 220ms ease;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-}
-.btn:hover{ transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.7)}
-.btn-primary{
-  border:2px solid rgba(255,140,26,0.18);
-  background: linear-gradient(90deg, rgba(255,140,26,0.06), rgba(0,180,255,0.04));
-  color:#fff;
-  text-shadow: 0 6px 28px rgba(255,140,26,0.06);
-  animation: pulseGlow 2.6s infinite;
-}
-@keyframes pulseGlow{
-  0%{ box-shadow: 0 6px 20px rgba(255,140,26,0.06) }
-  50%{ box-shadow: 0 14px 48px rgba(255,140,26,0.12) }
-  100%{ box-shadow: 0 6px 20px rgba(255,140,26,0.06) }
-}
-.btn-ghost{ color:var(--accent1); border:1px dashed rgba(0,180,255,0.12); }
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-/* hero overlay 3D shapes */
-.hero-shapes{
-  position:absolute;right:8%;top:10%;display:flex;gap:8px;z-index:1;pointer-events:none;
-}
-.shape{
-  width:58px;height:58px;border-radius:10px;background:linear-gradient(135deg, rgba(0,180,255,0.14), rgba(255,140,26,0.06));
-  transform: rotate(28deg);
-  box-shadow: 0 14px 30px rgba(0,0,0,0.6);
-  animation: spin3d 9s linear infinite;
-}
-.shape.small{width:36px;height:36px;animation-duration:7s}
-.shape.ghost{opacity:0.6;filter:blur(1px); transform: rotate(-8deg) scale(1.15)}
+        .btn {
+            padding: 12px 24px;
+            font-size: 18px;
+            font-family: "VT323", monospace;
+            background: linear-gradient(90deg, var(--fg), var(--accent));
+            color: var(--text-dark);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 rgba(255, 94, 98, 0.5);
+        }
 
-/* 3D spin */
-@keyframes spin3d{
-  0%{ transform: rotateY(0deg) rotate(0deg) translateY(0) }
-  50%{ transform: rotateY(180deg) rotate(6deg) translateY(-5px) }
-  100%{ transform: rotateY(360deg) rotate(0deg) translateY(0) }
-}
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(255, 94, 98, 0.7);
+        }
 
-/* ----------------------
-   Sections & Cards
-   ---------------------- */
-.section{
-  margin-top:22px;
-  display:grid;
-  gap:18px;
-  grid-template-columns: 1fr;
-}
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(255, 94, 98, 0.5);
+        }
 
-/* features grid */
-.features{
-  display:grid;
-  grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
-  gap:16px;
-}
-.feature-card{
-  padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border:1px solid var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur));
-  position:relative; overflow:hidden;
-  min-height:120px;
-  transition:transform 220ms ease, box-shadow 220ms ease;
-}
-.feature-card:hover{ transform: translateY(-8px) }
-.feature-icon{
-  width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,var(--accent1),#69e6ff);
-  display:flex;align-items:center;justify-content:center;margin-bottom:10px;
-  box-shadow: 0 8px 30px rgba(0,180,255,0.06);
-}
+        .btn-secondary {
+            background: transparent;
+            color: var(--fg);
+            border: 2px solid var(--fg);
+            box-shadow: none;
+        }
 
-/* progress bar */
-.progress-wrap{ margin-top:8px; }
-.progress{
-  height:16px;border-radius:999px;background:rgba(255,255,255,0.03);overflow:hidden;border:1px solid rgba(255,255,255,0.03);
-}
-.progress > i{
-  display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent1), var(--accent2));
-  transition: width 1.2s cubic-bezier(.22,.95,.3,1);
-  box-shadow:0 4px 22px rgba(0,180,255,0.08);
-}
+        .btn-secondary:hover {
+            background: rgba(255, 184, 76, 0.1);
+        }
 
-/* random pct */
-.random-pct{
-  display:flex;align-items:center;gap:8px;font-weight:700;font-size:20px;
-}
+        /* Section Styling */
+        .section {
+            padding: 80px 0;
+            position: relative;
+        }
 
-/* timer controls */
-.timer-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.slider{
-  appearance:none;width:100%;height:10px;border-radius:999px;background:rgba(255,255,255,0.03);outline:none;
-}
-.slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent1);box-shadow:0 6px 18px rgba(0,180,255,0.12)}
+        .section-title {
+            font-family: "Press Start 2P", monospace;
+            font-size: clamp(20px, 3vw, 32px);
+            text-align: center;
+            margin-bottom: 50px;
+            color: var(--fg);
+        }
 
-/* benefits */
-.benefits{
-  display:grid;grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));gap:16px;
-}
-.benefit{
-  padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
-  border:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(var(--glass-blur));
-  transform-origin:center;
-  animation: floatCard 6s ease-in-out infinite;
-}
-@keyframes floatCard{
-  0%{ transform: translateY(0) }
-  50%{ transform: translateY(-6px) }
-  100%{ transform: translateY(0) }
-}
-.benefit-icon{ width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:8px; }
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-/* pricing */
-.pricing{
-  display:grid;grid-template-columns: repeat(auto-fit,minmax(180px,1fr));gap:14px;
-}
-.plan{
-  padding:16px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border:1px solid rgba(255,255,255,0.04); text-align:center; position:relative;
-  transition: transform 240ms ease, box-shadow 240ms ease;
-}
-.plan.popular{
-  border:2px solid rgba(255,140,26,0.22);
-  box-shadow: 0 12px 40px rgba(255,140,26,0.06);
-  transform: scale(1.04);
-}
-.price{font-size:20px;font-weight:900;margin:8px 0}
-.plan .tag{
-  position:absolute;left:12px;top:-10px;padding:6px 10px;border-radius:8px;background:linear-gradient(90deg,var(--accent3),var(--accent2));
-  font-weight:900;font-size:12px;color:#0b0f14; box-shadow:0 6px 18px rgba(255,140,26,0.08)
-}
-.buy-btn{ margin-top:12px; display:inline-block; padding:10px 14px;border-radius:10px;border:2px solid rgba(255,255,255,0.04); cursor:pointer}
-.buy-btn:hover{ transform: translateY(-6px); box-shadow:0 20px 40px rgba(0,0,0,0.7) }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-color: var(--fg);
+        }
 
-/* testimonials */
-.testimonials{ display:flex;gap:14px;flex-wrap:wrap }
-.testimonial{
-  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);min-width:220px;max-width:320px;
-  transform:translateY(30px);opacity:0; transition:all 700ms ease;
-}
-.testimonial.show{ transform:translateY(0); opacity:1 }
-.testimonial .avatar{
-  width:52px;height:52px;border-radius:10px;overflow:hidden;margin-bottom:8px;background:linear-gradient(135deg,#00b4ff,#69e6ff);
-  display:flex;align-items:center;justify-content:center;font-weight:900;
-}
-.speech{
-  border-radius:8px;padding:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);
-}
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 184, 76, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
 
-/* FAQ */
-.faqs{ display:grid;gap:8px }
-.faq{
-  padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
-  border:1px solid rgba(255,255,255,0.03); cursor:pointer;
-}
-.faq .q{ font-weight:800 }
-.faq .a{ max-height:0; overflow:hidden; transition: max-height 420ms cubic-bezier(.2,.9,.25,1), opacity 320ms; opacity:0; padding-top:0 }
-.faq.open .a{ max-height:240px; opacity:1; padding-top:8px }
+        .card:hover::before {
+            transform: translateX(100%);
+        }
 
-/* footer */
-.footer{
-  margin-top:28px; padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);
-  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
-  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
-}
-.footer .col{ min-width:180px; }
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
 
-/* responsive */
-@media (max-width:900px){
-  .hero{ grid-template-columns:1fr; }
-  .hero-svg{ display:none }
-  .hero-cta{ width:100%; margin-left:0; }
-  .hero-scene{ height:260px; padding:14px }
-  .hero-shapes{ display:none }
-}
-@media (max-width:520px){
-  .container{ padding:16px }
-  .hero-title{ font-size:18px }
-  .cta-row{ flex-direction:column }
-}
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: var(--fg);
+        }
 
-/* small helpers */
-.kv {font-size:12px;color:rgba(230,243,255,0.65)}
-.center{text-align:center}
-.small{font-size:13px}
-.icon-small{width:20px;height:20px;display:inline-block;vertical-align:middle}
-.badge{padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-weight:700;font-size:12px}
-</style>
+        .feature-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--fg);
+        }
+
+        .feature-description {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--fg), var(--accent));
+            border-radius: 10px;
+            width: 0%;
+            transition: width 2s ease-in-out;
+        }
+
+        /* Random Percentage */
+        .random-percentage {
+            display: inline-block;
+            font-size: 28px;
+            color: var(--accent);
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* Timer Controls */
+        .timer-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .timer-input {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-light);
+            font-family: "VT323", monospace;
+            font-size: 18px;
+        }
+
+        .timer-label {
+            font-size: 16px;
+            color: var(--fg);
+        }
+
+        /* Benefits Section */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .benefit-card {
+            text-align: center;
+            animation: float 4s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.2s);
+        }
+
+        .benefit-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: var(--fg);
+            filter: drop-shadow(0 0 5px rgba(255, 184, 76, 0.7));
+        }
+
+        .benefit-title {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: var(--fg);
+        }
+
+        /* Pricing Section */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .pricing-card {
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card.featured {
+            transform: scale(1.05);
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 20px rgba(255, 94, 98, 0.5);
+            display: block;
+        }
+
+        .pricing-card.featured::before {
+            content: 'MAIS POPULAR';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: var(--text-light);
+            padding: 5px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .pricing-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: var(--fg);
+        }
+
+        .pricing-price {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 25px;
+            font-size: 18px;
+        }
+
+        .pricing-features li {
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--fg);
+        }
+
+        /* Testimonials Section */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .testimonial-card {
+            position: relative;
+            padding: 25px 25px 25px 70px;
+        }
+
+        .testimonial-avatar {
+            position: absolute;
+            left: 15px;
+            top: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--fg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text-dark);
+        }
+
+        .testimonial-text {
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            font-size: 16px;
+            color: var(--fg);
+            text-align: right;
+        }
+
+        /* FAQ Section */
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 15px 20px;
+            background: rgba(255, 184, 76, 0.1);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: rgba(255, 184, 76, 0.2);
+        }
+
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            font-size: 18px;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 15px 20px;
+            max-height: 500px;
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(7, 16, 24, 0.9);
+            border-top: 2px solid var(--border-color);
+            padding: 40px 0 20px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-section h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--fg);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--fg);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .pricing-card.featured {
+                transform: none;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="bg-pattern" aria-hidden="true"></div>
+    <!-- ASCII Vortex Background -->
+    <canvas id="vortex-canvas"></canvas>
 
-<div class="container">
-  <div class="topbar">
-    <div class="logo" role="img" aria-label="Mana Bot logo">
-      <div class="mark" aria-hidden="true">
-        <!-- pixel M -->
-        <svg width="38" height="38" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-          <rect width="64" height="64" rx="8" fill="transparent"/>
-          <g transform="translate(6,6)" fill="#001f2f">
-            <rect x="0" y="0" width="12" height="12" fill="#fff" opacity="0.06"/>
-          </g>
-          <path d="M10 50 L20 18 L32 36 L44 18 L54 50" stroke="#001b26" stroke-width="6" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
-          <path d="M10 50 L20 18 L32 36 L44 18 L54 50" stroke="#00b4ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-        </svg>
-      </div>
-      <div>
-        <div class="title-small" data-i18n="brand_sub">Companion Tools</div>
-        <div class="title-main" data-i18n="brand">Mana Bot</div>
-      </div>
+    <!-- Language Switcher -->
+    <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="pt">PT</button>
+        <button class="lang-btn" data-lang="en">EN</button>
     </div>
 
-    <div style="display:flex;align-items:center;gap:12px">
-      <div class="kv" style="text-align:right">
-        <div data-i18n="top_tagline">Automação para Rucoy Online</div>
-      </div>
-
-      <div class="lang-toggle" role="tablist" aria-label="Language switch">
-        <button id="lang-pt" class="active" aria-pressed="true">PT</button>
-        <button id="lang-en" aria-pressed="false">EN</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- HERO -->
-  <section class="hero" aria-label="Hero">
-    <div class="hero-scene" role="region" aria-label="Cena pixel art">
-      <!-- Left: pixel SVG scene (castle + forest) -->
-      <svg class="hero-svg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#001f2f"/><stop offset="1" stop-color="#003a5a" /></linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#g1)"/>
-        <!-- pixel ground -->
-        <g transform="translate(0,300)">
-          <rect x="0" y="0" width="800" height="100" fill="#071017"/>
-          <!-- simple castle silhouette -->
-          <g transform="translate(120,-140)">
-            <rect x="0" y="80" width="80" height="120" fill="#10232a"/>
-            <rect x="88" y="40" width="64" height="160" fill="#0e2830"/>
-            <rect x="-40" y="20" width="40" height="180" fill="#0f2327"/>
-            <rect x="0" y="0" width="152" height="24" fill="#223a3f"/>
-            <!-- battlements -->
-            <rect x="6" y="24" width="12" height="18" fill="#0c2a2f"/>
-            <rect x="28" y="24" width="12" height="18" fill="#0c2a2f"/>
-            <rect x="50" y="24" width="12" height="18" fill="#0c2a2f"/>
-            <rect x="72" y="24" width="12" height="18" fill="#0c2a2f"/>
-          </g>
-
-          <!-- pixel trees -->
-          <g transform="translate(420,-90)">
-            <rect x="0" y="0" width="12" height="60" fill="#102022"/>
-            <rect x="-30" y="-20" width="80" height="40" rx="6" fill="#00324a"/>
-            <rect x="-18" y="-38" width="44" height="30" rx="6" fill="#00485e" opacity="0.95"/>
-          </g>
-
-          <!-- orb glow -->
-          <circle cx="640" cy="-40" r="28" fill="#5ad1ff" opacity="0.08"/>
-        </g>
-
-        <!-- small pixel hero (Mana Bot mascot) -->
-        <g transform="translate(560,190) scale(1.6)">
-          <rect x="-10" y="-26" width="24" height="24" rx="4" fill="#69e6ff"/>
-          <rect x="-6" y="-12" width="6" height="6" fill="#002a34"/>
-          <rect x="0" y="-12" width="6" height="6" fill="#002a34"/>
-          <rect x="-4" y="-2" width="12" height="12" fill="#003a4f"/>
-          <rect x="-2" y="10" width="8" height="6" fill="#002026"/>
-        </g>
-      </svg>
-
-      <!-- right: CTAs and text -->
-      <div class="hero-cta">
-        <div>
-          <div class="hero-title" data-i18n="hero_title">Mana Bot — Seu Companheiro de Treinamento em Rucoy Online</div>
-          <div class="hero-sub" data-i18n="hero_sub">Automatize seu treino de mana 24h por dia com inteligência e segurança. Personalize tempo, comportamento aleatório e mantenha-se sempre pronto para a batalha.</div>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title" data-pt="Mana Bot — Seu Companheiro de Treinamento em Rucoy Online" data-en="Mana Bot — Your Training Companion in Rucoy Online">Mana Bot — Seu Companheiro de Treinamento em Rucoy Online</h1>
+            <p class="hero-subtitle" data-pt="Automatize seu treino de mana 24h por dia com inteligência e segurança." data-en="Automate your mana training 24 hours a day with intelligence and safety.">Automatize seu treino de mana 24h por dia com inteligência e segurança.</p>
+            <div class="hero-buttons">
+                <button class="btn" data-pt="Comprar Agora" data-en="Buy Now">Comprar Agora</button>
+                <button class="btn btn-secondary" data-pt="Ver Demonstração" data-en="See Demo">Ver Demonstração</button>
+            </div>
         </div>
+    </section>
 
-        <div class="cta-row">
-          <button class="btn btn-primary" id="buyNow" data-i18n="buy_now">Comprar Agora</button>
-          <button class="btn btn-ghost" id="demoBtn" data-i18n="view_demo">Ver Demonstração</button>
+    <!-- Features Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title" data-pt="Recursos" data-en="Features">Recursos</h2>
+            <div class="features-grid">
+                <div class="card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title" data-pt="Monitoramento Inteligente" data-en="Intelligent Monitoring">Monitoramento Inteligente</h3>
+                    <p class="feature-description" data-pt="Acompanhe em tempo real o progresso do seu treinamento de mana." data-en="Track your mana training progress in real time.">Acompanhe em tempo real o progresso do seu treinamento de mana.</p>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="feature-icon">🎲</div>
+                    <h3 class="feature-title" data-pt="Sorteio Aleatório" data-en="Random Selection">Sorteio Aleatório</h3>
+                    <p class="feature-description" data-pt="Comportamento imprevisível que simula ações humanas." data-en="Unpredictable behavior that simulates human actions.">Comportamento imprevisível que simula ações humanas.</p>
+                    <div class="random-percentage" id="random-percentage">0%</div>
+                </div>
+                
+                <div class="card">
+                    <div class="feature-icon">⏱️</div>
+                    <h3 class="feature-title" data-pt="Controle de Tempo" data-en="Time Control">Controle de Tempo</h3>
+                    <p class="feature-description" data-pt="Defina intervalos personalizados para pausas e retomadas." data-en="Set custom intervals for pauses and resumptions.">Defina intervalos personalizados para pausas e retomadas.</p>
+                    <div class="timer-controls">
+                        <div>
+                            <div class="timer-label" data-pt="Minutos" data-en="Minutes">Minutos</div>
+                            <input type="range" class="timer-input" id="minutes" min="0" max="60" value="10">
+                        </div>
+                        <div>
+                            <div class="timer-label" data-pt="Segundos" data-en="Seconds">Segundos</div>
+                            <input type="range" class="timer-input" id="seconds" min="0" max="59" value="30">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </section>
 
-        <div style="margin-top:8px; display:flex;gap:10px;align-items:center">
-          <div class="badge" data-i18n="tag_new">Lançamento</div>
-          <div class="kv" data-i18n="kv_online">Funciona em janelas de emulador e com interface adaptativa</div>
+    <!-- Benefits Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title" data-pt="Benefícios" data-en="Benefits">Benefícios</h2>
+            <div class="benefits-grid">
+                <div class="card benefit-card" style="--i: 0">
+                    <div class="benefit-icon">🛡️</div>
+                    <h3 class="benefit-title" data-pt="Treinamento 24/7 automatizado" data-en="24/7 Automated Training">Treinamento 24/7 automatizado</h3>
+                    <p data-pt="Deixe o Mana Bot trabalhando enquanto você descansa ou se diverte." data-en="Let Mana Bot work while you rest or have fun.">Deixe o Mana Bot trabalhando enquanto você descansa ou se diverte.</p>
+                </div>
+                
+                <div class="card benefit-card" style="--i: 1">
+                    <div class="benefit-icon">🧪</div>
+                    <h3 class="benefit-title" data-pt="Segurança com comportamento aleatório" data-en="Safety with Random Behavior">Segurança com comportamento aleatório</h3>
+                    <p data-pt="Padrões de uso variados que evitam detecção." data-en="Varied usage patterns that avoid detection.">Padrões de uso variados que evitam detecção.</p>
+                </div>
+                
+                <div class="card benefit-card" style="--i: 2">
+                    <div class="benefit-icon">💎</div>
+                    <h3 class="benefit-title" data-pt="Interface intuitiva e personalizável" data-en="Intuitive and Customizable Interface">Interface intuitiva e personalizável</h3>
+                    <p data-pt="Controle total sobre as configurações do bot." data-en="Full control over bot settings.">Controle total sobre as configurações do bot.</p>
+                </div>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <!-- floating shapes -->
-      <div class="hero-shapes" aria-hidden="true">
-        <div class="shape"></div>
-        <div class="shape small ghost"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="section" id="features" aria-label="Features">
-    <h2 class="small" style="margin:0 0 6px 4px" data-i18n="features_title">Recursos</h2>
-    <div class="features">
-      <div class="feature-card" id="f-monitor">
-        <div class="feature-icon" aria-hidden="true">
-          <!-- mana potion pixel icon -->
-          <svg width="28" height="28" viewBox="0 0 64 64">
-            <rect x="10" y="6" width="44" height="52" rx="6" fill="#061d28"/>
-            <circle cx="32" cy="34" r="12" fill="#00b4ff"/>
-            <rect x="20" y="8" width="24" height="6" rx="2" fill="#1fbfff"/>
-          </svg>
+    <!-- Pricing Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title" data-pt="Planos e Preços" data-en="Plans and Pricing">Planos e Preços</h2>
+            <div class="pricing-grid">
+                <div class="card pricing-card">
+                    <h3 class="pricing-title" data-pt="Básico" data-en="Basic">Básico</h3>
+                    <div class="pricing-price">R$19,90</div>
+                    <ul class="pricing-features">
+                        <li data-pt="Treinamento de mana básico" data-en="Basic mana training">Treinamento de mana básico</li>
+                        <li data-pt="1 conta por licença" data-en="1 account per license">1 conta por licença</li>
+                        <li data-pt="Suporte por email" data-en="Email support">Suporte por email</li>
+                    </ul>
+                    <button class="btn" data-pt="Comprar Agora" data-en="Buy Now">Comprar Agora</button>
+                </div>
+                
+                <div class="card pricing-card">
+                    <h3 class="pricing-title" data-pt="PRO" data-en="PRO">PRO</h3>
+                    <div class="pricing-price">R$39,90</div>
+                    <ul class="pricing-features">
+                        <li data-pt="Treinamento avançado de mana" data-en="Advanced mana training">Treinamento avançado de mana</li>
+                        <li data-pt="Até 3 contas por licença" data-en="Up to 3 accounts per license">Até 3 contas por licença</li>
+                        <li data-pt="Suporte prioritário" data-en="Priority support">Suporte prioritário</li>
+                        <li data-pt="Atualizações automáticas" data-en="Automatic updates">Atualizações automáticas</li>
+                    </ul>
+                    <button class="btn" data-pt="Comprar Agora" data-en="Buy Now">Comprar Agora</button>
+                </div>
+                
+                <div class="card pricing-card">
+                    <h3 class="pricing-title" data-pt="Premium" data-en="Premium">Premium</h3>
+                    <div class="pricing-price">R$79,90</div>
+                    <ul class="pricing-features">
+                        <li data-pt="Todos os recursos PRO" data-en="All PRO features">Todos os recursos PRO</li>
+                        <li data-pt="Contas ilimitadas" data-en="Unlimited accounts">Contas ilimitadas</li>
+                        <li data-pt="Suporte 24/7 via Discord" data-en="24/7 Discord support">Suporte 24/7 via Discord</li>
+                        <li data-pt="Acesso antecipado a novidades" data-en="Early access to new features">Acesso antecipado a novidades</li>
+                    </ul>
+                    <button class="btn" data-pt="Comprar Agora" data-en="Buy Now">Comprar Agora</button>
+                </div>
+            </div>
         </div>
-        <div style="font-weight:900" data-i18n="feat_monitor">Monitoramento Inteligente</div>
-        <div class="kv" data-i18n="feat_monitor_sub">Detecta mudança de mana, enfileira ações e evita padrões detectáveis.</div>
+    </section>
 
-        <div class="progress-wrap">
-          <div class="kv" style="margin-bottom:6px" data-i18n="feat_progress">Status do Mana</div>
-          <div class="progress"><i id="manaFill" aria-hidden="true"></i></div>
-          <div class="kv" style="margin-top:6px" id="manaPercent">0%</div>
+    <!-- Testimonials Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title" data-pt="Depoimentos de Jogadores" data-en="Player Testimonials">Depoimentos de Jogadores</h2>
+            <div class="testimonials-grid">
+                <div class="card testimonial-card">
+                    <div class="testimonial-avatar">😀</div>
+                    <p class="testimonial-text" data-pt="O Mana Bot mudou meu jogo — nunca mais fiquei sem mana!" data-en="Mana Bot changed my game — I never run out of mana anymore!">O Mana Bot mudou meu jogo — nunca mais fiquei sem mana!</p>
+                    <p class="testimonial-author" data-pt="— Carlos M., Level 85" data-en="— Carlos M., Level 85">— Carlos M., Level 85</p>
+                </div>
+                
+                <div class="card testimonial-card">
+                    <div class="testimonial-avatar">😎</div>
+                    <p class="testimonial-text" data-pt="Seguro, eficiente e fácil de usar. Vale cada centavo!" data-en="Safe, efficient, and easy to use. Worth every penny!">Seguro, eficiente e fácil de usar. Vale cada centavo!</p>
+                    <p class="testimonial-author" data-pt="— Ana S., Level 92" data-en="— Ana S., Level 92">— Ana S., Level 92</p>
+                </div>
+                
+                <div class="card testimonial-card">
+                    <div class="testimonial-avatar">🤩</div>
+                    <p class="testimonial-text" data-pt="Subi 20 levels em uma semana enquanto trabalhava. Incrível!" data-en="I leveled up 20 times in a week while working. Amazing!">Subi 20 levels em uma semana enquanto trabalhava. Incrível!</p>
+                    <p class="testimonial-author" data-pt="— Ricardo L., Level 78" data-en="— Ricardo L., Level 78">— Ricardo L., Level 78</p>
+                </div>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <div class="feature-card" id="f-random">
-        <div class="feature-icon" aria-hidden="true">
-          <!-- dice/pulse -->
-          <svg width="28" height="28" viewBox="0 0 64 64">
-            <rect x="8" y="8" width="48" height="48" rx="8" fill="#07232b"/>
-            <circle cx="20" cy="24" r="4" fill="#ffd34d"/>
-            <circle cx="32" cy="32" r="4" fill="#ffd34d"/>
-            <circle cx="44" cy="40" r="4" fill="#ffd34d"/>
-          </svg>
+    <!-- FAQ Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title" data-pt="Perguntas Frequentes" data-en="Frequently Asked Questions">Perguntas Frequentes</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span data-pt="O Mana Bot é seguro de usar?" data-en="Is Mana Bot safe to use?">O Mana Bot é seguro de usar?</span>
+                        <span class="faq-icon">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p data-pt="Sim! O Mana Bot foi desenvolvido com algoritmos de comportamento aleatório que simulam ações humanas, tornando praticamente impossível a detecção. Milhares de jogadores usam nossos bots diariamente sem problemas." data-en="Yes! Mana Bot was developed with random behavior algorithms that simulate human actions, making detection practically impossible. Thousands of players use our bots daily without issues.">Sim! O Mana Bot foi desenvolvido com algoritmos de comportamento aleatório que simulam ações humanas, tornando praticamente impossível a detecção. Milhares de jogadores usam nossos bots diariamente sem problemas.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span data-pt="Posso usar em várias contas?" data-en="Can I use it on multiple accounts?">Posso usar em várias contas?</span>
+                        <span class="faq-icon">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p data-pt="Depende do plano escolhido. O plano Básico permite 1 conta, o PRO permite até 3 contas, e o Premium permite contas ilimitadas. Você pode alterar seu plano a qualquer momento." data-en="It depends on the chosen plan. The Basic plan allows 1 account, PRO allows up to 3 accounts, and Premium allows unlimited accounts. You can change your plan at any time.">Depende do plano escolhido. O plano Básico permite 1 conta, o PRO permite até 3 contas, e o Premium permite contas ilimitadas. Você pode alterar seu plano a qualquer momento.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span data-pt="Quais são as formas de pagamento?" data-en="What are the payment methods?">Quais são as formas de pagamento?</span>
+                        <span class="faq-icon">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p data-pt="Aceitamos cartões de crédito (Visa, Mastercard, American Express), PayPal, PIX, e transferência bancária. Todos os pagamentos são processados com segurança e criptografia." data-en="We accept credit cards (Visa, Mastercard, American Express), PayPal, PIX, and bank transfers. All payments are processed securely with encryption.">Aceitamos cartões de crédito (Visa, Mastercard, American Express), PayPal, PIX, e transferência bancária. Todos os pagamentos são processados com segurança e criptografia.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div style="font-weight:900" data-i18n="feat_random">Sorteio Aleatório</div>
-        <div class="kv" data-i18n="feat_random_sub">Varia ações com chances e percentuais para tornar o comportamento humano-like.</div>
+    </section>
 
-        <div style="margin-top:12px">
-          <div class="random-pct">
-            <div id="randomPct" aria-live="polite">—%</div>
-            <div class="kv" data-i18n="feat_random_label">Chance de usar poção agora</div>
-          </div>
-          <div class="kv" style="font-size:12px;margin-top:8px" data-i18n="feat_hint">Clique em "Ver Demonstração" para ver as animações</div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 data-pt="Contato" data-en="Contact">Contato</h3>
+                    <ul class="footer-links">
+                        <li>Email: contato@manabot.com</li>
+                        <li>Discord: discord.gg/manabot</li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 data-pt="Links Úteis" data-en="Useful Links">Links Úteis</h3>
+                    <ul class="footer-links">
+                        <li><a href="#" data-pt="Termos de Uso" data-en="Terms of Use">Termos de Uso</a></li>
+                        <li><a href="#" data-pt="Política de Privacidade" data-en="Privacy Policy">Política de Privacidade</a></li>
+                        <li><a href="#" data-pt="Suporte" data-en="Support">Suporte</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 data-pt="Sobre Nós" data-en="About Us">Sobre Nós</h3>
+                    <p data-pt="Desenvolvemos ferramentas de automação para jogos desde 2018, com foco em segurança e eficiência." data-en="We have been developing automation tools for games since 2018, with a focus on safety and efficiency.">Desenvolvemos ferramentas de automação para jogos desde 2018, com foco em segurança e eficiência.</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p data-pt="Mana Bot é uma ferramenta independente, não afiliada ao Rucoy Online." data-en="Mana Bot is an independent tool, not affiliated with Rucoy Online.">Mana Bot é uma ferramenta independente, não afiliada ao Rucoy Online.</p>
+                <p>&copy; 2023 Mana Bot. Todos os direitos reservados.</p>
+            </div>
         </div>
-      </div>
+    </footer>
 
-      <div class="feature-card" id="f-time">
-        <div class="feature-icon" aria-hidden="true">
-          <!-- clock pixel -->
-          <svg width="28" height="28" viewBox="0 0 64 64">
-            <rect x="8" y="8" width="48" height="48" rx="6" fill="#051c2b"/>
-            <circle cx="32" cy="32" r="12" fill="#00b4ff"/>
-            <rect x="30" y="22" width="4" height="12" fill="#022a36"/>
-            <rect x="30" y="30" width="8" height="4" fill="#022a36"/>
-          </svg>
-        </div>
-        <div style="font-weight:900" data-i18n="feat_time">Controle de Tempo</div>
-        <div class="kv" data-i18n="feat_time_sub">Ajuste intervalos: delays, jitter, e janelas de ação para parecer natural.</div>
+    <script>
+        // ASCII Vortex Background
+        const canvas = document.getElementById('vortex-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        let DPR = Math.max(1, window.devicePixelRatio || 1);
 
-        <div style="margin-top:10px" class="timer-controls" aria-hidden="false">
-          <div style="flex:1">
-            <div class="kv" data-i18n="timer_label">Minutos</div>
-            <input type="range" class="slider" id="sliderM" min="0" max="10" value="1"/>
-            <div class="kv small" id="sliderMVal">1 min</div>
-          </div>
-          <div style="width:130px">
-            <div class="kv" data-i18n="timer_sec">Segundos</div>
-            <input type="range" class="slider" id="sliderS" min="0" max="59" value="30"/>
-            <div class="kv small" id="sliderSVal">30 s</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+        function fitCanvas() {
+            const cw = Math.max(320, innerWidth);
+            const ch = Math.max(240, innerHeight);
+            canvas.style.width = cw + 'px';
+            canvas.style.height = ch + 'px';
+            canvas.width = Math.floor(cw * DPR);
+            canvas.height = Math.floor(ch * DPR);
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        }
+        fitCanvas();
+        window.addEventListener('resize', fitCanvas);
 
-  <!-- BENEFITS -->
-  <section class="section" id="benefits" aria-label="Benefits">
-    <h2 class="small" style="margin:0 0 6px 4px" data-i18n="benefits_title">Benefícios</h2>
-    <div class="benefits">
-      <div class="benefit">
-        <div class="benefit-icon" aria-hidden="true">
-          <!-- potion -->
-          <svg width="36" height="36" viewBox="0 0 64 64">
-            <rect x="18" y="6" width="28" height="52" rx="6" fill="#002b34"/>
-            <circle cx="32" cy="34" r="10" fill="#69e6ff"/>
-            <rect x="24" y="4" width="16" height="8" rx="3" fill="#5ad1ff"/>
-          </svg>
-        </div>
-        <div style="font-weight:900" data-i18n="ben_247">Treinamento 24/7 automatizado</div>
-        <div class="kv" data-i18n="ben_247_sub">Deixe o bot rodando enquanto você estuda, trabalha ou descansa.</div>
-      </div>
+        // ASCII Vortex variables
+        let charSize = 14;
+        let charW = null, charH = null;
+        let rows = 0, cols = 0;
+        let M = 0;
+        let A = [];
+        let palette = " .,:;i1tfLCG08@#%$";
+        let I = [ "  MANA BOT  ", "  RUCOY ONLINE  " ];
+        let R = 0, B = 0;
 
-      <div class="benefit">
-        <div class="benefit-icon" aria-hidden="true">
-          <!-- shield -->
-          <svg width="36" height="36" viewBox="0 0 64 64">
-            <path d="M32 6 L52 14 V28 C52 44 40 54 32 58 C24 54 12 44 12 28 V14 Z" fill="#07323d"/>
-            <path d="M32 12 L44 18 V28 C44 40 36 46 32 48 C28 46 20 40 20 28 V18 Z" fill="#00b4ff" opacity="0.12"/>
-          </svg>
-        </div>
-        <div style="font-weight:900" data-i18n="ben_safe">Segurança com comportamento aleatório</div>
-        <div class="kv" data-i18n="ben_safe_sub">Jitter e intervalos randômicos para reduzir detecção.</div>
-      </div>
+        function rebuildGrid() {
+            ctx.save();
+            ctx.font = `${charSize}px monospace`;
+            const m = ctx.measureText("M");
+            charW = Math.ceil(m.width);
+            charH = Math.ceil(charSize * 1.05);
+            ctx.restore();
 
-      <div class="benefit">
-        <div class="benefit-icon" aria-hidden="true">
-          <!-- crystal -->
-          <svg width="36" height="36" viewBox="0 0 64 64">
-            <polygon points="32,6 44,30 32,58 20,30" fill="#00b4ff"/>
-            <polygon points="32,10 38,30 32,52 26,30" fill="#69e6ff" opacity="0.8"/>
-          </svg>
-        </div>
-        <div style="font-weight:900" data-i18n="ben_ui">Interface intuitiva e personalizável</div>
-        <div class="kv" data-i18n="ben_ui_sub">Controles simples, visual com preview e presets para iniciantes.</div>
-      </div>
-    </div>
-  </section>
+            cols = Math.floor(innerWidth / charW);
+            rows = Math.floor(innerHeight / charH);
+            M = cols;
 
-  <!-- PRICING -->
-  <section class="section" id="pricing" aria-label="Pricing">
-    <h2 class="small" style="margin:0 0 6px 4px" data-i18n="pricing_title">Planos</h2>
-    <div class="pricing">
-      <div class="plan" data-plan="basic">
-        <div style="font-weight:900">Básico</div>
-        <div class="price">R$19,90</div>
-        <div class="kv">Funções básicas de monitoramento e auto-use.</div>
-        <div style="margin-top:10px">
-          <button class="buy-btn" data-i18n="buy_now">Comprar Agora</button>
-        </div>
-      </div>
+            R = Math.floor(rows / 2 - I.length / 2);
+            B = Math.floor(cols / 2 - I[0].length / 2);
 
-      <div class="plan popular" data-plan="pro">
-        <div class="tag" data-i18n="popular_tag">Mais Popular</div>
-        <div style="font-weight:900">PRO</div>
-        <div class="price">R$39,90</div>
-        <div class="kv">Comportamento aleatório avançado, timers customizáveis e suporte.</div>
-        <div style="margin-top:10px">
-          <button class="buy-btn" data-i18n="buy_now">Comprar Agora</button>
-        </div>
-      </div>
+            A = new Array(rows);
+            for (let r = 0; r < rows; r++) {
+                A[r] = new Array(cols);
+                for (let c = 0; c < cols; c++) {
+                    const v = 0.5 * (r / (rows - 1) + c / (cols - 1));
+                    const idx = Math.floor(v * (palette.length - 1));
+                    A[r][c] = palette[idx];
+                }
+            }
+        }
+        rebuildGrid();
 
-      <div class="plan" data-plan="premium">
-        <div style="font-weight:900">Premium</div>
-        <div class="price">R$79,90</div>
-        <div class="kv">Todos os recursos + presets profissionais e atualizações vitalícias.</div>
-        <div style="margin-top:10px">
-          <button class="buy-btn" data-i18n="buy_now">Comprar Agora</button>
-        </div>
-      </div>
-    </div>
-  </section>
+        // Animation state
+        let z = 0, P = 0;
 
-  <!-- TESTIMONIALS -->
-  <section class="section" id="testimonials" aria-label="Testimonials">
-    <h2 class="small" style="margin:0 0 6px 4px" data-i18n="testi_title">Depoimentos</h2>
-    <div class="testimonials" id="testiWrap">
-      <div class="testimonial" data-delay="0">
-        <div class="avatar" aria-hidden="true">AL</div>
-        <div class="speech">“O Mana Bot mudou meu jogo — nunca mais fiquei sem mana!”</div>
-        <div class="kv small" style="margin-top:8px">— Alvaro, jogador</div>
-      </div>
+        function easePiece(e) {
+            if (e < 0.5) return (1 - Math.sqrt(1 - Math.pow(2 * e, 2))) / 2;
+            return (Math.sqrt(1 - Math.pow(-2 * e + 2, 2)) + 1) / 2;
+        }
 
-      <div class="testimonial" data-delay="180">
-        <div class="avatar" aria-hidden="true">BR</div>
-        <div class="speech">“Simples de configurar e super discreto. Recomendo!”</div>
-        <div class="kv small" style="margin-top:8px">— Bruno, clã NightWatch</div>
-      </div>
+        function K(e) {
+            requestAnimationFrame(K);
 
-      <div class="testimonial" data-delay="360">
-        <div class="avatar" aria-hidden="true">MG</div>
-        <div class="speech">“Rodando 24/7, me salvou em várias runs.”</div>
-        <div class="kv small" style="margin-top:8px">— MagoG, streamer</div>
-      </div>
-    </div>
-  </section>
+            if (!z) z = 0.001 * e;
+            if (!P) P = e;
 
-  <!-- FAQ -->
-  <section class="section" id="faq" aria-label="Perguntas Frequentes">
-    <h2 class="small" style="margin:0 0 6px 4px" data-i18n="faq_title">Perguntas Frequentes</h2>
-    <div class="faqs">
-      <div class="faq" data-i="1" tabindex="0" role="button" aria-expanded="false">
-        <div class="q" data-i18n="faq_q1">O Mana Bot é seguro de usar?</div>
-        <div class="a" data-i18n="faq_a1">Sim — o produto foi desenvolvido para operar com comportamento randômico e delays configuráveis, minimizando padrões repetitivos. Ainda assim, use por sua conta e risco — leia o termo de responsabilidade.</div>
-      </div>
+            if (document.visibilityState === "visible" && e - P < 42) {
+                return;
+            }
 
-      <div class="faq" data-i="2" tabindex="0" role="button" aria-expanded="false">
-        <div class="q" data-i18n="faq_q2">Posso usar em várias contas?</div>
-        <div class="a" data-i18n="faq_a2">Depende do uso e das regras do servidor. O Mana Bot permite perfis separados, mas recomendamos não rodar múltiplas instâncias simultâneas em um mesmo IP.</div>
-      </div>
+            if (document.visibilityState === "visible") {
+                P = e;
+            }
 
-      <div class="faq" data-i="3" tabindex="0" role="button" aria-expanded="false">
-        <div class="q" data-i18n="faq_q3">Quais são as formas de pagamento?</div>
-        <div class="a" data-i18n="faq_a3">Aceitamos Pix, cartão (via checkout seguro) e transferência. Contato por Discord para faturas e suporte.</div>
-      </div>
-    </div>
-  </section>
+            const a = 0.001 * e - z;
+            const t = easePiece(Math.min(Math.max(0.5 * (a - 1), 0), 1));
 
-  <!-- FOOTER -->
-  <footer class="footer" role="contentinfo">
-    <div class="col">
-      <div style="font-weight:900" data-i18n="footer_contact">Contato</div>
-      <div class="kv">E-mail: <a href="mailto:contato@manabot.example" style="color:var(--accent1)">contato@manabot.example</a></div>
-      <div class="kv">Discord: <a href="#" style="color:var(--accent1)">discord.gg/SeuServidor</a></div>
-    </div>
+            ctx.fillStyle = "rgba(3,4,6,0.18)";
+            ctx.fillRect(0, 0, canvas.width / DPR, canvas.height / DPR);
 
-    <div class="col">
-      <div style="font-weight:900" data-i18n="footer_links">Links Úteis</div>
-      <div class="kv"><a href="#" style="color:var(--accent1)" data-i18n="link_terms">Termos</a> · <a href="#" style="color:var(--accent1)" data-i18n="link_privacy">Privacidade</a> · <a href="#" style="color:var(--accent1)" data-i18n="link_support">Suporte</a></div>
-    </div>
+            ctx.font = `${charSize}px monospace`;
+            ctx.textBaseline = "top";
 
-    <div class="col">
-      <div style="font-weight:900" data-i18n="footer_legal">Aviso Legal</div>
-      <div class="kv small" data-i18n="footer_disclaimer">Mana Bot é uma ferramenta independente, não afiliada ao Rucoy Online.</div>
-    </div>
-  </footer>
-</div>
+            const baseColor = [255, 200, 120];
+            const overlayColor = [255, 245, 200];
 
-<!-- JS -->
-<script>
-/* ---------------------------
-   Translations (PT default; EN provided)
-   --------------------------- */
-const i18n = {
-  "pt": {
-    brand_sub: "Companion Tools",
-    brand: "Mana Bot",
-    top_tagline: "Automação para Rucoy Online",
-    hero_title: "Mana Bot — Seu Companheiro de Treinamento em Rucoy Online",
-    hero_sub: "Automatize seu treino de mana 24h por dia com inteligência e segurança. Personalize tempo, comportamento aleatório e mantenha-se sempre pronto para a batalha.",
-    buy_now: "Comprar Agora",
-    view_demo: "Ver Demonstração",
-    tag_new: "Lançamento",
-    kv_online: "Funciona em janelas de emulador e com interface adaptativa",
-    features_title: "Recursos",
-    feat_monitor: "Monitoramento Inteligente",
-    feat_monitor_sub: "Detecta mudança de mana, enfileira ações e evita padrões detectáveis.",
-    feat_progress: "Status do Mana",
-    feat_random: "Sorteio Aleatório",
-    feat_random_sub: "Varia ações com chances e percentuais para tornar o comportamento humano-like.",
-    feat_random_label: "Chance de usar poção agora",
-    feat_hint: "Clique em \"Ver Demonstração\" para ver as animações",
-    feat_time: "Controle de Tempo",
-    feat_time_sub: "Ajuste intervalos: delays, jitter, e janelas de ação para parecer natural.",
-    timer_label: "Minutos",
-    timer_sec: "Segundos",
-    benefits_title: "Benefícios",
-    ben_247: "Treinamento 24/7 automatizado",
-    ben_247_sub: "Deixe o bot rodando enquanto você estuda, trabalha ou descansa.",
-    ben_safe: "Segurança com comportamento aleatório",
-    ben_safe_sub: "Jitter e intervalos randômicos para reduzir detecção.",
-    ben_ui: "Interface intuitiva e personalizável",
-    ben_ui_sub: "Controles simples, visual com preview e presets para iniciantes.",
-    pricing_title: "Planos",
-    popular_tag: "Mais Popular",
-    buy_now: "Comprar Agora",
-    testi_title: "Depoimentos",
-    faq_title: "Perguntas Frequentes",
-    faq_q1: "O Mana Bot é seguro de usar?",
-    faq_a1: "Sim — o produto foi desenvolvido para operar com comportamento randômico e delays configuráveis, minimizando padrões repetitivos. Ainda assim, use por sua conta e risco — leia o termo de responsabilidade.",
-    faq_q2: "Posso usar em várias contas?",
-    faq_a2: "Depende do uso e das regras do servidor. O Mana Bot permite perfis separados, mas recomendamos não rodar múltiplas instâncias simultâneas em um mesmo IP.",
-    faq_q3: "Quais são as formas de pagamento?",
-    faq_a3: "Aceitamos Pix, cartão (via checkout seguro) e transferência. Contato por Discord para faturas e suporte.",
-    footer_contact: "Contato",
-    footer_links: "Links Úteis",
-    link_terms: "Termos",
-    link_privacy: "Privacidade",
-    link_support: "Suporte",
-    footer_legal: "Aviso Legal",
-    footer_disclaimer: "Mana Bot é uma ferramenta independente, não afiliada ao Rucoy Online."
-  },
-  "en": {
-    brand_sub: "Companion Tools",
-    brand: "Mana Bot",
-    top_tagline: "Automation for Rucoy Online",
-    hero_title: "Mana Bot — Your Training Companion for Rucoy Online",
-    hero_sub: "Automate your mana training 24/7 with intelligence and safety. Customize timing, randomness and stay battle-ready.",
-    buy_now: "Buy Now",
-    view_demo: "View Demo",
-    tag_new: "New",
-    kv_online: "Works with emulator windows and adaptive UI",
-    features_title: "Features",
-    feat_monitor: "Smart Monitoring",
-    feat_monitor_sub: "Detects mana changes, queues actions and avoids detectable patterns.",
-    feat_progress: "Mana Status",
-    feat_random: "Random Draw",
-    feat_random_sub: "Vary actions with dynamic percentages to behave more human-like.",
-    feat_random_label: "Chance to use potion now",
-    feat_hint: "Click \"View Demo\" to see animations",
-    feat_time: "Time Control",
-    feat_time_sub: "Adjust intervals: delays, jitter and windows to look natural.",
-    timer_label: "Minutes",
-    timer_sec: "Seconds",
-    benefits_title: "Benefits",
-    ben_247: "Automated 24/7 training",
-    ben_247_sub: "Let the bot run while you study, work or rest.",
-    ben_safe: "Safety with randomized behavior",
-    ben_safe_sub: "Jitter and random intervals to reduce detection.",
-    ben_ui: "Intuitive and customizable UI",
-    ben_ui_sub: "Simple controls, preview and presets for beginners.",
-    pricing_title: "Pricing",
-    popular_tag: "Most Popular",
-    buy_now: "Buy Now",
-    testi_title: "Testimonials",
-    faq_title: "Frequently Asked Questions",
-    faq_q1: "Is Mana Bot safe to use?",
-    faq_a1: "Yes — it was designed to operate with randomized behavior and configurable delays to minimize repetitive patterns. Use at your own risk; read the liability terms.",
-    faq_q2: "Can I use it on multiple accounts?",
-    faq_a2: "Depends on use and server rules. Mana Bot supports separate profiles but we advise against running multiple instances from the same IP.",
-    faq_q3: "What payment methods are accepted?",
-    faq_a3: "We accept Pix, card (secure checkout) and transfers. Contact via Discord for invoices and support.",
-    footer_contact: "Contact",
-    footer_links: "Useful Links",
-    link_terms: "Terms",
-    link_privacy: "Privacy",
-    link_support: "Support",
-    footer_legal: "Legal Notice",
-    footer_disclaimer: "Mana Bot is an independent tool, not affiliated with Rucoy Online."
-  }
-};
+            for (let n = 0; n < rows; n++) {
+                const s = 1 - 2 * n / rows;
+                for (let c = 0; c < cols; c++) {
+                    const o = 2 * c / M - 1;
+                    const d = Math.sqrt(o * o + s * s);
+                    const l = 0.1 * a / Math.max(0.1, d);
+                    const f = Math.cos(l), b = Math.sin(l);
+                    const u = o * f - s * b;
+                    const m = Math.floor((o * b + s * f + 1) / 2 * M);
+                    const h = ((Math.floor((u + 1) / 2 * rows) % rows) + rows) % rows;
 
-let currentLang = "pt";
+                    let g = " ";
+                    if (m >= 0 && m < M && h >= 0 && h < rows) g = A[h][m] || " ";
 
-/* Utility: apply translations */
-function applyI18n(lang){
-  currentLang = lang;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key = el.getAttribute('data-i18n');
-    if(i18n[lang] && i18n[lang][key]) el.textContent = i18n[lang][key];
-  });
-  document.getElementById('lang-pt').classList.toggle('active', lang==='pt');
-  document.getElementById('lang-en').classList.toggle('active', lang==='en');
-  document.getElementById('lang-pt').setAttribute('aria-pressed', lang==='pt');
-  document.getElementById('lang-en').setAttribute('aria-pressed', lang==='en');
-}
+                    let noise = 0.5 + 0.5 * Math.sin((c * 1.618) + a * 2.3 + Math.cos(n * 0.77));
+                    let brightness = Math.pow(noise, 0.85) * (0.4 + 0.6 * (1 - Math.abs(s)));
 
-/* init */
-applyI18n('pt');
+                    let alpha = Math.min(1, 0.15 + brightness);
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = `rgba(${baseColor[0]},${baseColor[1]},${baseColor[2]},${1})`;
+                    ctx.fillText(g, c * charW, n * charH);
 
-/* language toggles */
-document.getElementById('lang-pt').addEventListener('click', ()=>applyI18n('pt'));
-document.getElementById('lang-en').addEventListener('click', ()=>applyI18n('en'));
+                    if (n >= R && n < R + I.length && c >= B && c < B + I[0].length) {
+                        const p = c - B;
+                        const x = n - R;
+                        const v = (I[x] && I[x][p]) ? I[x][p] : " ";
+                        if (v !== " ") {
+                            ctx.globalAlpha = t;
+                            ctx.fillStyle = `rgba(${overlayColor[0]},${overlayColor[1]},${overlayColor[2]},1)`;
+                            ctx.fillText(v, c * charW, n * charH);
+                        }
+                    }
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+        requestAnimationFrame(K);
 
-/* ---------------------------
-   Demo interactions & animations
-   --------------------------- */
+        // Language Switcher
+        const langButtons = document.querySelectorAll('.lang-btn');
+        const currentLang = 'pt'; // Default language
 
-/* Mana progress auto-fill (animated) */
-const manaFill = document.getElementById('manaFill');
-const manaPercent = document.getElementById('manaPercent');
-let manaVal = 0;
-function animateManaOnce(target=78){
-  // animate from current to target
-  const start = manaVal;
-  const range = target - start;
-  const dur = 1400;
-  const t0 = performance.now();
-  function frame(t){
-    let p = (t - t0)/dur; if(p>1) p=1;
-    manaVal = Math.round(start + range * easeOutCubic(p));
-    manaFill.style.width = manaVal + '%';
-    manaPercent.textContent = manaVal + '%';
-    if(p<1) requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-function easeOutCubic(t){ return 1 - Math.pow(1-t,3) }
+        langButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const lang = button.getAttribute('data-lang');
+                
+                // Update active button
+                langButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Update all text elements
+                document.querySelectorAll('[data-pt]').forEach(element => {
+                    const text = element.getAttribute(`data-${lang}`);
+                    if (text) element.textContent = text;
+                });
+            });
+        });
 
-/* Random percentage animation */
-const randomPct = document.getElementById('randomPct');
-function randomPctAnimate(){
-  let a=0; const dur=900; const start=performance.now();
-  const target = Math.floor(Math.random()*81)+10;
-  function f(now){
-    let p=(now-start)/dur; if(p>1)p=1;
-    const val = Math.round(animateNum(a, target, easeOutCubic(p)));
-    randomPct.textContent = val + '%';
-    if(p<1) requestAnimationFrame(f);
-  }
-  requestAnimationFrame(f);
-}
-function animateNum(a,b,p){ return a + (b-a)*p }
+        // Progress Bar Animation
+        window.addEventListener('load', () => {
+            const progressBar = document.getElementById('progress-bar');
+            setTimeout(() => {
+                progressBar.style.width = '85%';
+            }, 500);
+        });
 
-/* sliders */
-const sliderM = document.getElementById('sliderM');
-const sliderS = document.getElementById('sliderS');
-const sliderMVal = document.getElementById('sliderMVal');
-const sliderSVal = document.getElementById('sliderSVal');
-function updateSliders(){
-  sliderMVal.textContent = sliderM.value + ' min';
-  sliderSVal.textContent = sliderS.value + ' s';
-}
-sliderM.addEventListener('input', updateSliders);
-sliderS.addEventListener('input', updateSliders);
-updateSliders();
+        // Random Percentage Animation
+        function updateRandomPercentage() {
+            const randomPercentage = document.getElementById('random-percentage');
+            const percentage = Math.floor(Math.random() * 100);
+            randomPercentage.textContent = `${percentage}%`;
+        }
 
-/* testimonials appear with stagger */
-function revealTestimonials(){
-  document.querySelectorAll('.testimonial').forEach((el,i)=>{
-    setTimeout(()=>el.classList.add('show'), i*220);
-  });
-}
-setTimeout(revealTestimonials, 600);
+        // Initial call and interval
+        updateRandomPercentage();
+        setInterval(updateRandomPercentage, 3000);
 
-/* FAQ toggles */
-document.querySelectorAll('.faq').forEach(el=>{
-  el.addEventListener('click', ()=> toggleFaq(el));
-  el.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') toggleFaq(el); });
-});
-function toggleFaq(el){
-  const open = el.classList.toggle('open');
-  el.setAttribute('aria-expanded', open);
-}
+        // Timer Controls
+        const minutesSlider = document.getElementById('minutes');
+        const secondsSlider = document.getElementById('seconds');
 
-/* Pricing highlight toggle (auto highlight popular) */
-(function highlightPopular(){
-  const plans = document.querySelectorAll('.plan');
-  plans.forEach(p => p.addEventListener('mouseenter', ()=>{ plans.forEach(x=>x.classList.remove('focus')); p.classList.add('focus'); p.style.transform='translateY(-8px)'; }));
-  plans.forEach(p => p.addEventListener('mouseleave', ()=>{ plans.forEach(x=>x.classList.remove('focus')); p.style.transform=''; }));
-  // auto pulsing glow on popular
-  setInterval(()=> {
-    const popular = document.querySelector('.plan.popular');
-    if(!popular) return;
-    popular.animate([{ boxShadow: '0 12px 40px rgba(255,140,26,0.02)' }, { boxShadow: '0 20px 60px rgba(255,140,26,0.12)' }, { boxShadow: '0 12px 40px rgba(255,140,26,0.02)' }], {duration:2600});
-  }, 3200);
-})();
+        minutesSlider.addEventListener('input', function() {
+            // Just visual feedback, no specific functionality required
+        });
 
-/* Demo button triggers animations */
-document.getElementById('demoBtn').addEventListener('click', ()=>{
-  // mana jump
-  animateManaOnce(Math.floor(Math.random()*70)+20);
-  // random %
-  randomPctAnimate();
-  // small burst of shapes
-  burstShapes();
-});
+        secondsSlider.addEventListener('input', function() {
+            // Just visual feedback, no specific functionality required
+        });
 
-/* On load, populate mana & random */
-window.addEventListener('load', ()=>{
-  animateManaOnce(46);
-  randomPctAnimate();
-});
+        // FAQ Accordion
+        const faqItems = document.querySelectorAll('.faq-item');
 
-/* shapes burst (temporary floating glows) */
-function burstShapes(){
-  const wrap = document.querySelector('.hero-scene');
-  if(!wrap) return;
-  for(let i=0;i<6;i++){
-    const s = document.createElement('div');
-    s.style.position='absolute';
-    s.style.width = s.style.height = (6+Math.random()*38)+'px';
-    s.style.left = (20 + Math.random()*60)+'%';
-    s.style.top = (10 + Math.random()*60)+'%';
-    s.style.borderRadius = '8px';
-    s.style.pointerEvents = 'none';
-    s.style.opacity = '0.9';
-    s.style.transform = 'translateY(0) rotate('+ (Math.random()*40 - 20) +'deg)';
-    s.style.background = Math.random() > 0.5 ? 'linear-gradient(135deg, rgba(90,209,255,0.14), rgba(0,180,255,0.06))' : 'linear-gradient(135deg, rgba(255,140,26,0.08), rgba(255,205,120,0.02))';
-    s.style.boxShadow = '0 14px 40px rgba(0,0,0,0.6)';
-    wrap.appendChild(s);
-    const dur = 900 + Math.random()*900;
-    s.animate([{ transform: s.style.transform, opacity:0.9 }, { transform: 'translateY(-60px) rotate('+ (Math.random()*90 - 45) +'deg)', opacity:0 }], { duration: dur, easing:'ease-out' });
-    setTimeout(()=>s.remove(), dur+80);
-  }
-}
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            
+            question.addEventListener('click', () => {
+                // Toggle active class on clicked item
+                item.classList.toggle('active');
+                
+                // Close other items
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item && otherItem.classList.contains('active')) {
+                        otherItem.classList.remove('active');
+                    }
+                });
+            });
+        });
 
-/* small enhancement: smooth scroll to sections if anchor used (no anchors present but useful) */
-document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click', e=>{
-  e.preventDefault();
-  const t = document.querySelector(a.getAttribute('href'));
-  if(t) t.scrollIntoView({behavior:'smooth'});
-}));
+        // Button hover effects
+        const buttons = document.querySelectorAll('.btn');
+        
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.boxShadow = '0 0 15px rgba(255, 184, 76, 0.7)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.boxShadow = '';
+            });
+        });
 
-/* subtle floating glow on buttons */
-document.querySelectorAll('.btn').forEach(b=>{
-  b.addEventListener('mousemove', evt=>{
-    const r = b.getBoundingClientRect();
-    const x = (evt.clientX - r.left) / r.width * 100;
-    const y = (evt.clientY - r.top) / r.height * 100;
-    b.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(255,255,255,0.04), rgba(255,255,255,0.01) 30%)`;
-  });
-  b.addEventListener('mouseleave', ()=> b.style.background = '');
-});
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
 
-/* subtle lazy animations for sections when in view */
-const observer = new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      e.target.style.opacity=1;
-      e.target.style.transform='';
-    }
-  });
-},{threshold:0.12});
-document.querySelectorAll('.section').forEach(s=>{
-  s.style.opacity=0; s.style.transform='translateY(18px)'; observer.observe(s);
-});
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
 
-/* accessibility: keyboard for buy buttons triggers a demo purchase modal (simple alert) */
-document.querySelectorAll('.buy-btn, #buyNow').forEach(btn=>{
-  btn.addEventListener('click', ()=> {
-    alert((currentLang==='pt' ? 'Obrigado! Em breve você será direcionado ao checkout.' : 'Thanks! You will be redirected to checkout soon.'));
-  });
-});
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
 
-/* small auto-random update every 16s to show dynamic display */
-setInterval(()=> {
-  randomPctAnimate();
-  const newMana = Math.floor(Math.random()*80)+10;
-  animateManaOnce(newMana);
-}, 16000);
-
-/* END */
-</script>
+        // Apply to sections
+        document.querySelectorAll('.section').forEach(section => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(20px)';
+            section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(section);
+        });
+    </script>
 </body>
 </html>
